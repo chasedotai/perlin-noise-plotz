@@ -6,12 +6,9 @@ class NoisySpiral {
         this.noise = SimplexNoise.createNoise2D();
         this.bindEvents();
         
-        // Set initial canvas size
-        this.canvas.style.width = '800px';
-        this.canvas.style.height = '800px';
-        // Set actual canvas resolution
-        this.canvas.width = 800 * window.devicePixelRatio;
-        this.canvas.height = 800 * window.devicePixelRatio;
+        // Set initial canvas size to 1000px
+        this.canvas.width = 1000;
+        this.canvas.height = 1000;
     }
 
     bindEvents() {
