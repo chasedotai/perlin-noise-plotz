@@ -2,9 +2,16 @@ class NoisySpiral {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        const simplex = new SimplexNoise();
-        this.noise = (x, y) => simplex.noise2D(x, y);
+        // Create a new instance of SimplexNoise
+        this.noise = SimplexNoise.createNoise2D();
         this.bindEvents();
+        
+        // Set initial canvas size
+        this.canvas.style.width = '800px';
+        this.canvas.style.height = '800px';
+        // Set actual canvas resolution
+        this.canvas.width = 800 * window.devicePixelRatio;
+        this.canvas.height = 800 * window.devicePixelRatio;
     }
 
     bindEvents() {
@@ -18,13 +25,18 @@ class NoisySpiral {
         const noiseAmplitude = parseInt(document.getElementById('noiseAmplitude').value);
         const noiseFrequency = parseInt(document.getElementById('noiseFrequency').value) / 100;
 
-        // Set canvas size
-        this.canvas.width = diameter;
-        this.canvas.height = diameter;
+        // Update canvas size
+        this.canvas.style.width = `${diameter}px`;
+        this.canvas.style.height = `${diameter}px`;
+        this.canvas.width = diameter * window.devicePixelRatio;
+        this.canvas.height = diameter * window.devicePixelRatio;
         
         // Clear canvas with white background
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Scale for high DPI displays
+        this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         
         // Generate spiral points
         this.points = this.generateSpiralPoints(diameter/2, turns, noiseAmplitude, noiseFrequency);
@@ -36,14 +48,13 @@ class NoisySpiral {
     generateSpiralPoints(radius, turns, noiseAmplitude, noiseFrequency) {
         const points = [];
         const steps = turns * 200;
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
+        const centerX = radius;
+        const centerY = radius;
 
         for (let i = 0; i < steps; i++) {
             const t = (i / steps) * turns * Math.PI * 2;
             const distance = (radius * i) / steps;
             
-            // Adjust noise sampling
             const noiseValue = this.noise(
                 t * noiseFrequency,
                 t * noiseFrequency
@@ -64,6 +75,8 @@ class NoisySpiral {
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'black';
         this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
         
         this.points.forEach((point, i) => {
             if (i === 0) {
