@@ -4,7 +4,13 @@ class NoisySpiral {
         this.ctx = canvas.getContext('2d');
         this.noise = SimplexNoise.createNoise2D();
         this.bindEvents();
-        this.generate(); // Generate initial spiral
+        
+        // Set initial size
+        this.canvas.width = 999;
+        this.canvas.height = 999;
+        
+        // Draw initial spiral
+        this.generate();
     }
 
     bindEvents() {
@@ -29,13 +35,14 @@ class NoisySpiral {
         // Draw spiral
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'black';
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 3; // Made line thicker
         
         const centerX = diameter / 2;
         const centerY = diameter / 2;
-        const maxRadius = diameter / 2;
+        const maxRadius = (diameter / 2) - 20; // Slightly smaller to ensure visibility
         
-        for (let angle = 0; angle < turns * Math.PI * 2; angle += 0.1) {
+        // Draw spiral with smaller angle steps for smoother curve
+        for (let angle = 0; angle < turns * Math.PI * 2; angle += 0.02) {
             const radius = (angle / (turns * Math.PI * 2)) * maxRadius;
             const noiseValue = this.noise(angle * noiseFrequency, angle * noiseFrequency) * noiseAmplitude;
             
@@ -49,7 +56,14 @@ class NoisySpiral {
             }
         }
         
+        // Add debug circle to ensure canvas is working
         this.ctx.stroke();
+        
+        // Draw a small circle at the center for reference
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'red';
+        this.ctx.fill();
         
         // Store points for SVG export
         this.points = Array.from(this.ctx.getPathPoints?.() || []);
