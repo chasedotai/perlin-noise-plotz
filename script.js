@@ -25,18 +25,13 @@ class NoisySpiral {
         const noiseAmplitude = parseInt(document.getElementById('noiseAmplitude').value);
         const noiseFrequency = parseInt(document.getElementById('noiseFrequency').value) / 100;
 
-        // Update canvas size
-        this.canvas.style.width = `${diameter}px`;
-        this.canvas.style.height = `${diameter}px`;
-        this.canvas.width = diameter * window.devicePixelRatio;
-        this.canvas.height = diameter * window.devicePixelRatio;
+        // Set canvas size
+        this.canvas.width = diameter;
+        this.canvas.height = diameter;
         
         // Clear canvas with white background
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Scale for high DPI displays
-        this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         
         // Generate spiral points
         this.points = this.generateSpiralPoints(diameter/2, turns, noiseAmplitude, noiseFrequency);
@@ -48,22 +43,26 @@ class NoisySpiral {
     generateSpiralPoints(radius, turns, noiseAmplitude, noiseFrequency) {
         const points = [];
         const steps = turns * 200;
-        const centerX = radius;
-        const centerY = radius;
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
 
         for (let i = 0; i < steps; i++) {
             const t = (i / steps) * turns * Math.PI * 2;
-            const distance = (radius * i) / steps;
+            // Calculate base spiral radius
+            const spiralRadius = (radius * i) / steps;
             
+            // Add noise to the radius
             const noiseValue = this.noise(
-                t * noiseFrequency,
-                t * noiseFrequency
+                Math.cos(t) * noiseFrequency,
+                Math.sin(t) * noiseFrequency
             );
             
-            const noisyDistance = distance + (noiseValue * noiseAmplitude);
+            // Apply noise to radius
+            const noisyRadius = spiralRadius + (noiseValue * noiseAmplitude);
             
-            const x = centerX + Math.cos(t) * noisyDistance;
-            const y = centerY + Math.sin(t) * noisyDistance;
+            // Calculate final position
+            const x = centerX + Math.cos(t) * noisyRadius;
+            const y = centerY + Math.sin(t) * noisyRadius;
             
             points.push([x, y]);
         }
@@ -72,6 +71,9 @@ class NoisySpiral {
     }
 
     drawSpiral() {
+        // Clear any previous transformations
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'black';
         this.ctx.lineWidth = 2;
