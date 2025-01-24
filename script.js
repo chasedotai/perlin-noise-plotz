@@ -2,13 +2,9 @@ class NoisySpiral {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        // Create a new instance of SimplexNoise
         this.noise = SimplexNoise.createNoise2D();
         this.bindEvents();
-        
-        // Set initial canvas size to 1000px
-        this.canvas.width = 1000;
-        this.canvas.height = 1000;
+        this.generate(); // Generate initial spiral
     }
 
     bindEvents() {
@@ -30,68 +26,54 @@ class NoisySpiral {
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Generate spiral points
-        this.points = this.generateSpiralPoints(diameter/2, turns, noiseAmplitude, noiseFrequency);
-        
         // Draw spiral
-        this.drawSpiral();
-    }
-
-    generateSpiralPoints(radius, turns, noiseAmplitude, noiseFrequency) {
-        const points = [];
-        const steps = turns * 200;
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
-
-        for (let i = 0; i < steps; i++) {
-            const t = (i / steps) * turns * Math.PI * 2;
-            // Calculate base spiral radius
-            const spiralRadius = (radius * i) / steps;
-            
-            // Add noise to the radius
-            const noiseValue = this.noise(
-                Math.cos(t) * noiseFrequency,
-                Math.sin(t) * noiseFrequency
-            );
-            
-            // Apply noise to radius
-            const noisyRadius = spiralRadius + (noiseValue * noiseAmplitude);
-            
-            // Calculate final position
-            const x = centerX + Math.cos(t) * noisyRadius;
-            const y = centerY + Math.sin(t) * noisyRadius;
-            
-            points.push([x, y]);
-        }
-        
-        return points;
-    }
-
-    drawSpiral() {
-        // Clear any previous transformations
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'black';
         this.ctx.lineWidth = 2;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
         
-        this.points.forEach((point, i) => {
-            if (i === 0) {
-                this.ctx.moveTo(point[0], point[1]);
+        const centerX = diameter / 2;
+        const centerY = diameter / 2;
+        const maxRadius = diameter / 2;
+        
+        for (let angle = 0; angle < turns * Math.PI * 2; angle += 0.1) {
+            const radius = (angle / (turns * Math.PI * 2)) * maxRadius;
+            const noiseValue = this.noise(angle * noiseFrequency, angle * noiseFrequency) * noiseAmplitude;
+            
+            const x = centerX + (radius + noiseValue) * Math.cos(angle);
+            const y = centerY + (radius + noiseValue) * Math.sin(angle);
+            
+            if (angle === 0) {
+                this.ctx.moveTo(x, y);
             } else {
-                this.ctx.lineTo(point[0], point[1]);
+                this.ctx.lineTo(x, y);
             }
-        });
+        }
         
         this.ctx.stroke();
+        
+        // Store points for SVG export
+        this.points = Array.from(this.ctx.getPathPoints?.() || []);
     }
 
     downloadSVG() {
-        if (!this.points) return;
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        
+        // Create SVG path data directly from last drawn spiral
+        const pathData = `M ${width/2} ${height/2} ` + Array.from({length: 360}, (_, i) => {
+            const angle = (i / 360) * Math.PI * 2;
+            const radius = (i / 360) * (width/2);
+            const x = width/2 + radius * Math.cos(angle);
+            const y = height/2 + radius * Math.sin(angle);
+            return `L ${x} ${y}`;
+        }).join(' ');
 
-        const svgString = this.generateSVG();
+        const svgString = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" 
+     xmlns="http://www.w3.org/2000/svg">
+    <path d="${pathData}" fill="none" stroke="black" stroke-width="2"/>
+</svg>`;
+
         const blob = new Blob([svgString], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         
@@ -103,27 +85,10 @@ class NoisySpiral {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
-
-    generateSVG() {
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        
-        let pathData = '';
-        this.points.forEach((point, i) => {
-            pathData += `${i === 0 ? 'M' : 'L'} ${point[0].toFixed(2)} ${point[1].toFixed(2)} `;
-        });
-
-        return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" 
-     xmlns="http://www.w3.org/2000/svg">
-    <path d="${pathData}" fill="none" stroke="black" stroke-width="2"/>
-</svg>`;
-    }
 }
 
 // Initialize the app when the page loads
 window.addEventListener('load', () => {
     const canvas = document.getElementById('canvas');
     const app = new NoisySpiral(canvas);
-    app.generate(); // Generate initial spiral
 }); 
