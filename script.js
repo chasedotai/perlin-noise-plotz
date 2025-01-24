@@ -2,7 +2,8 @@ class NoisySpiral {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.noise = new SimplexNoise.createNoise2D();
+        const simplex = new SimplexNoise();
+        this.noise = (x, y) => simplex.noise2D(x, y);
         this.bindEvents();
     }
 
@@ -34,7 +35,7 @@ class NoisySpiral {
 
     generateSpiralPoints(radius, turns, noiseAmplitude, noiseFrequency) {
         const points = [];
-        const steps = turns * 200; // Increased points per turn for smoother curve
+        const steps = turns * 200;
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
 
@@ -42,13 +43,13 @@ class NoisySpiral {
             const t = (i / steps) * turns * Math.PI * 2;
             const distance = (radius * i) / steps;
             
-            // Add noise to the radius
+            // Adjust noise sampling
             const noiseValue = this.noise(
-                Math.cos(t) * noiseFrequency,
-                Math.sin(t) * noiseFrequency
+                t * noiseFrequency,
+                t * noiseFrequency
             );
             
-            const noisyDistance = distance + noiseValue * noiseAmplitude;
+            const noisyDistance = distance + (noiseValue * noiseAmplitude);
             
             const x = centerX + Math.cos(t) * noisyDistance;
             const y = centerY + Math.sin(t) * noisyDistance;
@@ -62,7 +63,7 @@ class NoisySpiral {
     drawSpiral() {
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'black';
-        this.ctx.lineWidth = 2; // Made line thicker
+        this.ctx.lineWidth = 2;
         
         this.points.forEach((point, i) => {
             if (i === 0) {
@@ -97,13 +98,13 @@ class NoisySpiral {
         
         let pathData = '';
         this.points.forEach((point, i) => {
-            pathData += `${i === 0 ? 'M' : 'L'} ${point[0]} ${point[1]} `;
+            pathData += `${i === 0 ? 'M' : 'L'} ${point[0].toFixed(2)} ${point[1].toFixed(2)} `;
         });
 
         return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" 
      xmlns="http://www.w3.org/2000/svg">
-    <path d="${pathData}" fill="none" stroke="black" stroke-width="1"/>
+    <path d="${pathData}" fill="none" stroke="black" stroke-width="2"/>
 </svg>`;
     }
 }
